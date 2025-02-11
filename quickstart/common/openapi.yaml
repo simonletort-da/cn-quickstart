@@ -1,0 +1,708 @@
+openapi: 3.0.0
+info:
+  title: Backend API
+  description: API to manage AppInstalls and Licenses
+  version: 1.0.0
+
+paths:
+  /login-links:
+    get:
+      summary: Get list of links that initiate login
+      operationId: listLinks
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginLink'
+        '400':
+          description: Invalid input
+
+  /user:
+    get:
+      summary: Get Authenticated User
+      operationId: getAuthenticatedUser
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticatedUser'
+        '401':
+          description: Not authenticated
+
+  /oauth2/admin/clients:
+    post:
+      summary: Create OAuth2 Client Registration
+      operationId: createClientRegistration
+      requestBody:
+        description: OAuth2 Client Registration object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuth2ClientRegistrationRequest'
+      responses:
+        '200':
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2ClientRegistration'
+        '400':
+          description: Invalid input
+    get:
+      summary: List all OAuth2 Client Registrations
+      operationId: listClientRegistrations
+      responses:
+        '200':
+          description: A list of OAuth2 Client Registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OAuth2ClientRegistration'
+        '400':
+          description: Invalid request
+
+  /oauth2/admin/clients/{clientId}:
+    delete:
+      summary: Delete OAuth2 Client Registration
+      operationId: deleteClientRegistration
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The client ID of the registration to delete
+      responses:
+        '200':
+          description: OAuth2 Client Registration deleted
+        '400':
+          description: Invalid client ID
+        '404':
+          description: Client Registration not found
+
+  /app-install-requests:
+    get:
+      summary: List all AppInstallRequests
+      operationId: listAppInstallRequests
+      responses:
+        '200':
+          description: A list of AppInstallRequests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppInstallRequest'
+        '400':
+          description: Invalid input
+
+  /app-install-requests/{contractId}/accept:
+    post:
+      summary: Accept an AppInstallRequest
+      operationId: acceptAppInstallRequest
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the AppInstallRequest to accept
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      requestBody:
+        description: Acceptance parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppInstallRequestAccept'
+      responses:
+        '200':
+          description: AppInstall created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppInstall'
+        '400':
+          description: Invalid input
+
+  /app-install-requests/{contractId}/reject:
+    post:
+      summary: Reject an AppInstallRequest
+      operationId: rejectAppInstallRequest
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the AppInstallRequest to reject
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      requestBody:
+        description: Rejection parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppInstallRequestReject'
+      responses:
+        '200':
+          description: AppInstallRequest rejected
+        '400':
+          description: Invalid input
+
+  /app-install-requests/{contractId}/cancel:
+    post:
+      summary: Cancel an AppInstallRequest
+      operationId: cancelAppInstallRequest
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the AppInstallRequest to cancel
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      requestBody:
+        description: Cancellation parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppInstallRequestCancel'
+      responses:
+        '200':
+          description: AppInstallRequest canceled
+        '400':
+          description: Invalid input
+
+  /app-installs/{contractId}/create-license:
+    post:
+      summary: Create a License using the AppInstall
+      operationId: createLicense
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the AppInstall to use
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      requestBody:
+        description: License creation parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppInstallCreateLicenseRequest'
+      responses:
+        '200':
+          description: License created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppInstallCreateLicenseResult'
+        '400':
+          description: Invalid input
+
+  /app-installs/{contractId}/cancel:
+    post:
+      summary: Cancel an AppInstall
+      operationId: cancelAppInstall
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the AppInstall to cancel
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      requestBody:
+        description: Cancellation parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppInstallCancel'
+      responses:
+        '200':
+          description: AppInstall canceled
+        '400':
+          description: Invalid input
+
+  /app-installs:
+    get:
+      summary: List all AppInstalls
+      operationId: listAppInstalls
+      responses:
+        '200':
+          description: A list of AppInstalls
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppInstall'
+        '400':
+          description: Invalid input
+
+  /licenses:
+    get:
+      summary: List all Licenses
+      operationId: listLicenses
+      responses:
+        '200':
+          description: A list of Licenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/License'
+        '400':
+          description: Invalid input
+
+  /licenses/{contractId}/renew:
+    post:
+      summary: Renew a License
+      operationId: renewLicense
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the License to renew
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      requestBody:
+        description: License renewal parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseRenewRequest'
+      responses:
+        '200':
+          description: Renewal offer and payment request created
+        '400':
+          description: Invalid input
+
+  /license-renewal-requests:
+    get:
+      summary: List all LicenseRenewalRequests
+      operationId: listLicenseRenewalRequests
+      responses:
+        '200':
+          description: A list of LicenseRenewalRequests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LicenseRenewalRequest'
+        '400':
+          description: Invalid input
+
+  /license-renewal-requests/{contractId}/complete-renewal:
+    post:
+      summary: Complete the License Renewal
+      operationId: completeLicenseRenewal
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the LicenseRenewalRequest
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      responses:
+        '200':
+          description: License renewed successfully
+        '400':
+          description: Invalid input
+
+  /licenses/{contractId}/expire:
+    post:
+      summary: Expire a License
+      operationId: expireLicense
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract ID of the License to expire
+        - name: commandId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The command ID for the ledger transaction
+      requestBody:
+        description: Expiration parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseExpireRequest'
+      responses:
+        '200':
+          description: License expired
+          content:
+            text/plain:
+              schema:
+                type: string
+                nullable: true
+        '400':
+          description: Invalid input
+          content:
+            text/plain:
+              schema:
+                type: string
+                nullable: true
+        '412':
+          description: License is not expirable
+          content:
+            text/plain:
+              schema:
+                type: string
+                nullable: true
+        '500':
+          description: An internal server error occurred
+          content:
+            text/plain:
+              schema:
+                type: string
+                nullable: true
+
+components:
+  schemas:
+    OAuth2ClientRegistrationRequest:
+      type: object
+      required:
+        - clientId
+        - scope
+        - authorizationUri
+        - tokenUri
+        - jwkSetUri
+        - party
+      properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        scope:
+          type: string
+        authorizationUri:
+          type: string
+        tokenUri:
+          type: string
+        jwkSetUri:
+          type: string
+        party:
+          type: string
+
+    OAuth2ClientRegistration:
+      type: object
+      required:
+        - clientId
+        - scope
+        - authorizationUri
+        - tokenUri
+        - jwkSetUri
+        - party
+      properties:
+        clientId:
+          type: string
+        scope:
+          type: string
+        authorizationUri:
+          type: string
+        tokenUri:
+          type: string
+        jwkSetUri:
+          type: string
+        party:
+          type: string
+        preconfigured:
+          type: boolean
+
+    AuthenticatedUser:
+      type: object
+      required:
+        - name
+        - party
+        - roles
+        - isAdmin
+      properties:
+        name:
+          type: string
+        party:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        isAdmin:
+          type: boolean
+
+    LoginLink:
+      type: object
+      required:
+        - name
+        - url
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+
+    AppInstallRequest:
+      type: object
+      properties:
+        contractId:
+          type: string
+        dso:
+          type: string
+        provider:
+          type: string
+        user:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Metadata'
+
+    AppInstallRequestAccept:
+      type: object
+      required:
+        - installMeta
+        - meta
+      properties:
+        installMeta:
+          $ref: '#/components/schemas/Metadata'
+        meta:
+          $ref: '#/components/schemas/Metadata'
+
+    AppInstallRequestReject:
+      type: object
+      required:
+        - meta
+      properties:
+        meta:
+          $ref: '#/components/schemas/Metadata'
+
+    AppInstallRequestCancel:
+      type: object
+      required:
+        - meta
+      properties:
+        meta:
+          $ref: '#/components/schemas/Metadata'
+
+    AppInstall:
+      type: object
+      properties:
+        contractId:
+          type: string
+        dso:
+          type: string
+        provider:
+          type: string
+        user:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Metadata'
+        numLicensesCreated:
+          type: integer
+        licenseNum:
+          type: integer
+
+    AppInstallCreateLicenseRequest:
+      type: object
+      required:
+        - params
+      properties:
+        params:
+          $ref: '#/components/schemas/LicenseParams'
+
+    AppInstallCreateLicenseResult:
+      type: object
+      properties:
+        installId:
+          type: string
+        licenseId:
+          type: string
+
+    AppInstallCancel:
+      type: object
+      required:
+        - meta
+      properties:
+        meta:
+          $ref: '#/components/schemas/Metadata'
+
+    LicenseParams:
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/Metadata'
+
+    License:
+      type: object
+      properties:
+        contractId:
+          type: string
+        dso:
+          type: string
+        provider:
+          type: string
+        user:
+          type: string
+        params:
+          $ref: '#/components/schemas/LicenseParams'
+        expiresAt:
+          type: string
+          format: date-time
+        licenseNum:
+          type: integer
+
+    Metadata:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties:
+            type: string
+
+    LicenseRenewRequest:
+      type: object
+      required:
+        - licenseFeeCc
+        - licenseExtensionDuration
+        - paymentAcceptanceDuration
+        - description
+      properties:
+        licenseFeeCc:
+          type: number
+        licenseExtensionDuration:
+          type: string
+          description: "The duration to extend the license (e.g., 'P30D' for 30 days)."
+        paymentAcceptanceDuration:
+          type: string
+          description: "The duration the payment request will remain valid."
+        description:
+          type: string
+
+    LicenseRenewalRequest:
+      type: object
+      properties:
+        contractId:
+          type: string
+        provider:
+          type: string
+        user:
+          type: string
+        dso:
+          type: string
+        licenseNum:
+          type: integer
+        licenseFeeCc:
+          type: number
+        licenseExtensionDuration:
+          type: string
+          description: "RelTime representing how long the license should be extended."
+        reference:
+          type: string
+
+    LicenseExpireRequest:
+      type: object
+      required:
+        - meta
+      properties:
+        meta:
+          $ref: '#/components/schemas/Metadata'
+
+    AppPaymentRequest:
+      type: object
+      properties:
+        contractId:
+          type: string
+        provider:
+          type: string
+        dso:
+          type: string
+        sender:
+          type: string
+        receiverAmounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceiverAmount'
+        description:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    ReceiverAmount:
+      type: object
+      required:
+        - receiver
+        - amount
+      properties:
+        receiver:
+          type: string
+        amount:
+          $ref: '#/components/schemas/PaymentAmount'
+
+    PaymentAmount:
+      type: object
+      required:
+        - amount
+        - unit
+      properties:
+        amount:
+          type: number
+        unit:
+          type: string

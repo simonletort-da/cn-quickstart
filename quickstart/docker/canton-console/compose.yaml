@@ -1,0 +1,27 @@
+# Copyright (c) 2024, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+networks:
+  quickstart:
+    external: true
+    name: ${DOCKER_NETWORK}
+
+services:
+  canton-console:
+    image: "${IMAGE_REPO}canton:${IMAGE_TAG}"
+    volumes:
+      - ../../config/canton-console/app.conf:/app/app.conf
+      - ../../docker/canton-console/entrypoint.sh:/app/entrypoint.sh
+    environment:
+      - LEDGER_API_ADDRESS=participant-app-provider
+      - PARTICIPANT_APP_PROVIDER_LEDGER_API_PORT=${PARTICIPANT_APP_PROVIDER_LEDGER_API_PORT}
+      - PARTICIPANT_APP_PROVIDER_ADMIN_API_PORT=${PARTICIPANT_APP_PROVIDER_ADMIN_API_PORT}
+      - LEDGER_API_ADMIN_USER=${LEDGER_API_ADMIN_USER}
+      - LEDGER_API_ADMIN_SECRET=${LEDGER_API_ADMIN_SECRET}
+      - AUTH_APP_PROVIDER_TOKEN_URI=${AUTH_APP_PROVIDER_TOKEN_URI}
+    entrypoint: /app/entrypoint.sh
+    stdin_open: true
+    tty: true
+    networks:
+      - ${DOCKER_NETWORK}

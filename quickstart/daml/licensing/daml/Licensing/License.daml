@@ -1,0 +1,125 @@
+-- Copyright (c) 2025, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: 0BSD
+
+-- | A license contract for a CN application that allows the app provider charge
+-- a fee and share some of the app rewards that they get back with their users.
+--
+-- See the comments on the License template and its choices for design rationale.
+module Licensing.License where
+
+import Licensing.Util
+import Splice.Wallet.Payment
+import Splice.AmuletRules (AppTransferContext(..))
+import Splice.Round
+import Splice.Util
+import DA.Time
+import DA.Assert
+
+-- License contract template
+----------------------------
+
+-- | Parameters determining the license behavior.
+data LicenseParams = LicenseParams with
+    meta : Metadata -- ^ Machine-readable metadata for this license.
+  deriving (Eq, Show)
+
+data Group = Group
+  with
+    user : Party
+    provider : Party
+    dso: Party
+  deriving (Show, Eq)  
+
+-- | A template to track one specific license renewal request.
+-- Note that multiple of these can be in flight at any point in time.
+template LicenseRenewalRequest with
+    provider : Party
+    user : Party
+    dso : Party
+    licenseNum : Int
+    licenseFeeCc : Decimal
+    licenseExtensionDuration : RelTime
+    reference : ContractId AppPaymentRequest
+  where 
+    signatory user, provider
+
+    postconsuming choice LicenseRenewalRequest_CompleteRenewal : ContractId License
+      with
+        acceptedPaymentCid : ContractId AcceptedAppPayment
+        licenseCid: ContractId License
+        transferContext : AppTransferContext
+      controller provider
+      do
+         -- archival happens via the consuming AcceptedAppPayment_Collect choice
+         acceptedPayment <- fetchUncheckedButArchiveLater acceptedPaymentCid
+         exercise acceptedPaymentCid (AcceptedAppPayment_Collect transferContext)
+         openMiningRound <- exercise @OpenMiningRound transferContext.openMiningRound (OpenMiningRound_Fetch provider)
+         let expectedAcceptedPayment = AcceptedAppPayment with
+               sender = user
+               provider
+               amuletReceiverAmounts = [ReceiverAmuletAmount provider licenseFeeCc]
+               dso 
+               lockedAmulet = acceptedPayment.lockedAmulet
+               round = openMiningRound.round
+               reference
+         acceptedPayment === expectedAcceptedPayment
+         license <- fetchAndArchive Group {user, provider, dso} licenseCid
+         licenseNum === license.licenseNum
+         now <- getTime
+         create License with
+                    dso
+                    user
+                    provider
+                    licenseNum
+                    params = license.params
+                    expiresAt = (max now license.expiresAt) `addRelTime` licenseExtensionDuration       
+
+-- | A license contract between an app provider and an app user to use the app
+-- for a specific purpose.
+template License with
+    provider : Party -- ^ App provider issuing the license.
+    user : Party -- ^ App user holding the license.
+    dso : Party -- ^ DSO party issuing the CC to be used for billing.
+    expiresAt: Time -- ^ Time when the license expires.
+    licenseNum : Int -- ^ License number identifying this license among all of the ones granted by the provider to this user.
+    params : LicenseParams -- ^ Parameters determining the behavior and purpose of the license.
+  where
+    signatory provider, user
+    
+    nonconsuming choice License_Renew : (ContractId LicenseRenewalRequest, ContractId AppPaymentRequest)
+      with
+        licenseFeeCc: Decimal      
+        licenseExtensionDuration : RelTime
+        paymentAcceptanceDuration: RelTime
+        description: Text
+      controller provider
+      do now <- getTime
+         paymentRequest <- create AppPaymentRequest with
+           provider, dso
+           sender = user
+           receiverAmounts = [ReceiverAmount provider (PaymentAmount licenseFeeCc AmuletUnit)]
+           description
+           expiresAt = now `addRelTime` paymentAcceptanceDuration
+         renewalOffer <- create LicenseRenewalRequest
+           with
+             provider, dso, user 
+             licenseFeeCc
+             licenseExtensionDuration
+             licenseNum
+             reference = paymentRequest
+         pure (renewalOffer, paymentRequest)    
+
+
+    choice License_Expire : ()
+      with
+        actor : Party -- Party that initiated the expiration.
+        meta : Metadata -- Metadata for this expiration.
+      controller actor
+      do
+        now <- getTime
+        Licensing.Util.require "Actor is a signatory" (actor `elem` signatory this)
+        Licensing.Util.require "License is not expired yet" (now > expiresAt)        
+        enforceMetadataLimits meta
+
+instance HasCheckedFetch License Group where
+  contractGroupId License{..} = Group with ..
