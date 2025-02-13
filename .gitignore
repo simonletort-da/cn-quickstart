@@ -30,3 +30,5 @@ gradle-app.setting
 
 # backups
 *.bak
+
+~/.netrc
