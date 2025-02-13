@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # install nix
-sh <(curl -L https://nixos.org/nix/install) --no-daemon
+sh <(curl -L https://nixos.org/nix/install)
 . /home/codespace/.nix-profile/etc/profile.d/nix.sh
 
 # install direnv
@@ -23,3 +23,6 @@ java -version
 cd quickstart
 make install-daml-sdk
 
+make build
+
+make start
