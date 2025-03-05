@@ -6,7 +6,7 @@ If you are impatient, then you can start by following the Engineer Setup below. 
 - [Quickstart Installation](docs/guide/CN-QS-Installation-20250227.pdf)
 - [Exploring The Demo](docs/guide/ExploringTheDemo-20250227.pdf)
 - [Project Structure](docs/guide/ProjectStructureGuide-20250212.pdf)
-- [FAQ](docs/guide/CN-QS-FAQ-20250227.pdf)
+- [FAQ](docs/guide/CN-QS_FAQ.md)
 <!---  - Troubleshooting and debugging with Observability --->
 Additional documentation and updates are planned weekly.
 
